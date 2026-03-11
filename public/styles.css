@@ -770,31 +770,39 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  min-width: 140px;
-  padding: 16px 24px;
-  background: var(--bg-surface);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  justify-content: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 180px;
+  padding: 32px 24px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 16px 40px -12px rgba(26, 28, 25, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+}
+
+.metric:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 24px 48px -12px rgba(26, 28, 25, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.9) inset;
 }
 
 .metric__label {
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
-  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: var(--text-soft);
+  font-weight: 600;
 }
 
 .metric__value {
   font-family: var(--serif);
-  font-size: 2rem;
+  font-size: 3.5rem;
   font-weight: 500;
   color: var(--text-main);
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .metric--accent .metric__value {
@@ -1236,11 +1244,14 @@ button {
    Premium Frosted Glass Blur & Gentle Slide (Refined 2026 Trend)
    ========================================================================== */
 #app {
+  /* Default states to ensure transitions clear properly */
+  filter: none;
+  opacity: 1;
+  transform: translateY(0) scale(1);
   /* The normal state transition (when it gently glides back into place) - slowed down */
   transition: filter 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
               opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
               transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-  will-change: filter, opacity, transform;
 }
 
 #app.lang-transition-exit {
@@ -1268,22 +1279,35 @@ button {
 @keyframes flash-pop-in {
   0% {
     opacity: 0;
-    transform: scale(0.9) translateY(-10px);
+    transform: translateX(-50%) scale(0.9) translateY(-10px);
     filter: blur(8px);
   }
   60% {
     opacity: 1;
-    transform: scale(1.02) translateY(0);
+    transform: translateX(-50%) scale(1.02) translateY(0);
     filter: blur(0);
   }
   100% {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translateX(-50%) scale(1) translateY(0);
     filter: blur(0);
   }
 }
 
 .banner {
+  position: fixed;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  min-width: 320px;
+  max-width: 500px;
+  padding: 18px 48px;
+  font-size: 1.05rem;
+  text-align: center;
+  border-radius: 100px;
+  box-shadow: 0 16px 48px -12px rgba(26, 28, 25, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
   animation: flash-pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   will-change: transform, opacity, filter;
+  pointer-events: none;
 }

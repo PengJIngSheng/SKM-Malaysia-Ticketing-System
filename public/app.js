@@ -36,7 +36,7 @@ const TRANSLATIONS = {
     fullName: "Full Name",
     emailAdd: "Email Address",
     phoneNum: "Phone Number",
-    dept: "Department",
+    dept: "Organisation",
     category: "Category",
     subject: "Subject",
     desc: "Detailed Description",
@@ -452,13 +452,35 @@ function formatBytes(value) {
 
 let flashTimeout = null;
 function setFlash(type, message) {
-  state.flash = { type, message, id: Date.now() };
+  const flashId = Date.now();
+  state.flash = { type, message, id: flashId };
   render();
-  if (flashTimeout) clearTimeout(flashTimeout);
-  flashTimeout = setTimeout(() => {
-    state.flash = null;
-    render();
-  }, 3000);
+
+  setTimeout(() => {
+    // Only animate out if this specific flash is still active
+    if (state.flash && state.flash.id === flashId) {
+      const banner = document.querySelector('.banner');
+      if (banner) {
+        // Apply premium 'breathing' fade out effect
+        banner.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+        banner.style.opacity = '0';
+        banner.style.filter = 'blur(12px) brightness(1.2)';
+        banner.style.transform = 'translateX(-50%) translateY(-10px) scale(0.98)';
+
+        // Remove from DOM strictly after animation without global render
+        setTimeout(() => {
+          if (state.flash && state.flash.id === flashId) {
+            state.flash = null;
+            if (banner.parentNode) banner.parentNode.removeChild(banner);
+          }
+        }, 800);
+      } else {
+        // Fallback
+        state.flash = null;
+        render();
+      }
+    }
+  }, 1800);
 }
 
 function renderFlash() {
@@ -531,7 +553,6 @@ function renderTopbar(mode) {
           <button class="topbar__link topbar__link--btn" data-action="open-contact-modal">${t("CONTACT US")}</button>
         `
       : `
-          <span class="topbar__meta">${escapeHtml(modeLabel)}</span>
           <button class="button button--ghost" data-action="logout">${t("RETURN HOME")}</button>
         `;
 
@@ -540,7 +561,7 @@ function renderTopbar(mode) {
       <div class="brand">
         <img src="https://i.ibb.co/0yZ9dYbt/pepperlabs-logo.png" alt="Pepper Labs" class="brand__logo" />
         <div class="brand__text">
-          <div class="brand__name">Solution Expert ticketing system</div>
+          <div class="brand__name">Solution ticketing system</div>
         </div>
       </div>
       <div class="topbar__actions">
@@ -1422,6 +1443,29 @@ async function handleClick(event) {
 
       if (input) {
         input.value = value;
+        // Explicitly set state to bypass event bubbling edge-cases
+        if (input.id === "user-filter") {
+          state.userFilter = value;
+          render();
+          return;
+        }
+        if (input.id === "admin-filter-priority") {
+          state.adminFilters.priority = value;
+          render();
+          return;
+        }
+        if (input.id === "admin-filter-status") {
+          state.adminFilters.status = value;
+          render();
+          return;
+        }
+        if (input.id === "admin-filter-department") {
+          state.adminFilters.department = value;
+          render();
+          return;
+        }
+
+        // Fallback for form inputs without immediate re-rendering
         input.dispatchEvent(new Event('change', { bubbles: true }));
       }
       if (display) display.textContent = label;
