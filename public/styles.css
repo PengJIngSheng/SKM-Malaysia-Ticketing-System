@@ -277,12 +277,13 @@ button {
   top: 100%;
   left: 0;
   right: 0;
-  height: 12px;
+  height: 4px; /* Reduced gap trigger size */
   background: transparent;
 }
 
-.language-select-wrapper:focus-within .language-menu,
-.language-select-wrapper:hover .language-menu {
+.language-btn:focus + .language-menu,
+.language-btn:hover + .language-menu,
+.language-menu:hover {
   opacity: 1;
   visibility: visible;
   transform: translate(-50%, 0);

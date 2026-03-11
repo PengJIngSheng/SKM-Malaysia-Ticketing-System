@@ -38,7 +38,6 @@ const TRANSLATIONS = {
     phoneNum: "Phone Number",
     dept: "Organisation",
     category: "Category",
-    subject: "Subject",
     desc: "Detailed Description",
     atchImg: "Attach Image (Optional)",
     atchVid: "Record Screen (Max 60s)",
@@ -166,7 +165,6 @@ const TRANSLATIONS = {
     phoneNum: "Nombor Telefon",
     dept: "Agensi/syarikat",
     category: "Kategori",
-    subject: "Subjek",
     desc: "Penerangan Terperinci",
     atchImg: "Lampirkan Imej (Pilihan)",
     atchVid: "Rakam Skrin (Max 60s)",
@@ -287,7 +285,6 @@ const TRANSLATIONS = {
     phoneNum: "电话号码",
     dept: "部门",
     category: "问题分类",
-    subject: "主旨",
     desc: "详细描述",
     atchImg: "上传图片 (可选)",
     atchVid: "录制屏幕 (最长 60秒)",
@@ -731,10 +728,6 @@ function renderPublicPage() {
                   ${getIssueTypes().map(([value, label]) => `<button type="button" class="faux-select-option" data-action="select-option" data-value="${escapeHtml(value)}">${escapeHtml(label)}</button>`).join("")}
                 </div>
               </div>
-            </label>
-            <label class="field">
-              <span class="field__label">${t("subject")}</span>
-              <input name="subject" type="text" placeholder="Brief summary" required />
             </label>
           </div>
           <label class="field">

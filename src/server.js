@@ -315,7 +315,7 @@ function attachmentView(attachment, token) {
 function makeWhatsappEscalationLink(ticket, settings) {
   const number = String(settings.supportTeam.whatsappNumber || "").replace(/[^\d]/g, "");
   const message = encodeURIComponent(
-    `Ticket ${ticket.id} remains unresolved. Please contact me regarding: ${ticket.subject}`
+    `Ticket ${ticket.id} remains unresolved. Please contact me regarding: ${ticket.description}`
   );
   return number ? `https://wa.me/${number}?text=${message}` : null;
 }
@@ -336,7 +336,6 @@ function mapTicketForUser(ticket, data, token) {
   const restricted = ticket.priority === 1 && ticket.recordState === "active";
   const base = {
     id: ticket.id,
-    subject: ticket.subject,
     summary: ticket.summary,
     issueType: ticket.issueType,
     priority: ticket.priority,
@@ -384,7 +383,6 @@ function mapTicketForAdmin(ticket, data, token) {
   const user = data.users.find((item) => item.id === ticket.userId);
   return {
     id: ticket.id,
-    subject: ticket.subject,
     summary: ticket.summary,
     description: ticket.description,
     issueType: ticket.issueType,
@@ -777,12 +775,11 @@ async function handleRequest(req, res, isAdminPort = false) {
           !body.email ||
           !body.phone ||
           !body.department ||
-          !body.subject ||
           !body.description ||
           !body.issueType
         ) {
           throw new Error(
-            "Name, email, phone, department, subject, description, and issue type are required."
+            "Name, email, phone, department, description, and issue type are required."
           );
         }
 
@@ -816,14 +813,11 @@ async function handleRequest(req, res, isAdminPort = false) {
           userId: user.id,
           contactPhone: user.phone,
           department: user.department,
-          subject: String(body.subject).trim(),
           description: String(body.description).trim(),
           issueType: String(body.issueType).trim(),
           priority: priorityDecision.priority,
           status: "pending",
-          summary: `${String(body.subject).trim().slice(0, 80)} | ${String(body.description)
-            .trim()
-            .slice(0, 90)}`,
+          summary: `${String(body.description).trim().slice(0, 150)}`,
           attachments: savedAttachments,
           supplements: [],
           replies: [],
@@ -884,8 +878,8 @@ async function handleRequest(req, res, isAdminPort = false) {
       const body = await parseBody(req);
       const result = await mutateData(async (data) => {
         const auth = requireAuth(data, req, urlObject, ["user"]);
-        if (!body.subject || !body.description || !body.issueType) {
-          throw new Error("Subject, description, and issue type are required.");
+        if (!body.description || !body.issueType) {
+          throw new Error("Description and issue type are required.");
         }
 
         const attachments = body.attachments || [];
@@ -897,7 +891,6 @@ async function handleRequest(req, res, isAdminPort = false) {
 
         const priorityDecision = classifyPriority({
           settings: data.settings,
-          subject: body.subject,
           description: body.description,
           issueType: body.issueType,
           attachments,
@@ -911,16 +904,15 @@ async function handleRequest(req, res, isAdminPort = false) {
           role: "user",
         });
 
-        const summary = `${String(body.subject).trim().slice(0, 80)} | ${String(body.description)
+        const summary = `${String(body.description)
           .trim()
-          .slice(0, 90)}`;
+          .slice(0, 150)}`;
         const timestamp = nowIso();
         const ticket = {
           id: ticketId,
           userId: auth.user.id,
           contactPhone: auth.user.phone,
           department: auth.user.department,
-          subject: String(body.subject).trim(),
           description: String(body.description).trim(),
           issueType: String(body.issueType).trim(),
           priority: priorityDecision.priority,

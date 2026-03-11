@@ -70,8 +70,8 @@ function validateAttachment({ role, attachment }) {
   return errors;
 }
 
-function classifyPriority({ settings, subject, description, issueType, attachments }) {
-  const combinedText = `${subject || ""}\n${description || ""}`.toLowerCase();
+function classifyPriority({ settings, description, issueType, attachments }) {
+  const combinedText = `${description || ""}`.toLowerCase();
   const highKeywords = normalizeKeywordList(settings.priorityRules.highKeywords);
   const mediumKeywords = normalizeKeywordList(settings.priorityRules.mediumKeywords);
   const reasons = [];
