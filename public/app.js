@@ -532,7 +532,7 @@ function renderTopbar(mode) {
         `
       : `
           <span class="topbar__meta">${escapeHtml(modeLabel)}</span>
-          <button class="button button--ghost" data-action="logout">${t("returnHome")}</button>
+          <button class="button button--ghost" data-action="logout">${t("RETURN HOME")}</button>
         `;
 
   return `
@@ -540,8 +540,7 @@ function renderTopbar(mode) {
       <div class="brand">
         <img src="https://i.ibb.co/0yZ9dYbt/pepperlabs-logo.png" alt="Pepper Labs" class="brand__logo" />
         <div class="brand__text">
-          <div class="brand__name">Pepper Labs</div>
-          <div class="brand__sub">${escapeHtml(modeLabel)}</div>
+          <div class="brand__name">Solution Expert ticketing system</div>
         </div>
       </div>
       <div class="topbar__actions">
@@ -563,7 +562,7 @@ function renderTopbar(mode) {
 
 window.setLanguage = function (lang) {
   if (state.lang === lang) return;
-  
+
   const appContainer = document.getElementById('app');
   if (!appContainer) {
     state.lang = lang;
@@ -574,19 +573,19 @@ window.setLanguage = function (lang) {
 
   // 1. Trigger Exit Blur-Fade Animation
   appContainer.classList.add('lang-transition-exit');
-  
+
   setTimeout(() => {
     // 2. Change language and render DOM while hidden/blurred
     state.lang = lang;
     localStorage.setItem("ticketing_lang", lang);
     render();
-    
+
     // 3. Immediately prepare entrance state
     appContainer.classList.remove('lang-transition-exit');
     appContainer.classList.add('lang-transition-enter');
-    
+
     // 4. Force reflow, then remove enter class to animate normally
-    void appContainer.offsetWidth; 
+    void appContainer.offsetWidth;
     appContainer.classList.remove('lang-transition-enter');
   }, 400); // 0.4s matches the slower, gentle drop-out animation defined in CSS
 };
@@ -910,12 +909,22 @@ function renderUserView() {
           <h2 class="filter-bar__title">${escapeHtml(state.bootstrap.session.name)}</h2>
         </div>
         <div class="filter-bar__controls">
-          <select id="user-filter">
-            <option value="active" ${state.userFilter === "active" ? "selected" : ""}>${t("actveOnly")}</option>
-            <option value="archived" ${state.userFilter === "archived" ? "selected" : ""}>${t("archOnly")}</option>
-            <option value="all" ${state.userFilter === "all" ? "selected" : ""}>${t("everythg")}</option>
-          </select>
-          <span class="pill pill--neutral">${escapeHtml(state.bootstrap.session.email)}</span>
+          <div class="faux-select-wrapper" style="min-width: 200px;">
+             <button type="button" class="faux-select-btn" data-action="toggle-dropdown" style="min-height: 48px; padding: 12px 20px;">
+               <span class="faux-select-value">${state.userFilter === "active" ? t("actveOnly") :
+      state.userFilter === "archived" ? t("archOnly") :
+        t("everythg")
+    }</span>
+               <i class="faux-select-arrow"></i>
+             </button>
+             <div class="faux-select-menu">
+               <button type="button" class="faux-select-option" data-action="select-option" data-value="active">${t("actveOnly")}</button>
+               <button type="button" class="faux-select-option" data-action="select-option" data-value="archived">${t("archOnly")}</button>
+               <button type="button" class="faux-select-option" data-action="select-option" data-value="all">${t("everythg")}</button>
+             </div>
+             <input type="hidden" id="user-filter" value="${state.userFilter}" />
+          </div>
+          <span class="pill pill--neutral" style="height: 48px; padding: 0 20px; font-size: 13px;">${escapeHtml(state.bootstrap.session.email)}</span>
         </div>
       </section>
 
@@ -1018,11 +1027,18 @@ function renderAdminTicket(ticket) {
             </label>
             <label class="field">
               <span class="field__label">${t("postRep")}</span>
-              <select name="nextStatus">
-                <option value="replied" ${ticket.status === "replied" ? "selected" : ""}>${t("awtCli")}</option>
-                <option value="in_progress" ${ticket.status === "in_progress" ? "selected" : ""}>${t("inPrg")}</option>
-                <option value="resolved" ${ticket.status === "resolved" ? "selected" : ""}>${t("mrkRes")}</option>
-              </select>
+              <div class="faux-select-wrapper">
+                <input type="hidden" name="nextStatus" value="${ticket.status === 'resolved' ? 'resolved' : ticket.status === 'in_progress' ? 'in_progress' : 'replied'}" required />
+                <button type="button" class="faux-select-btn" data-action="toggle-dropdown">
+                  <span class="faux-select-value">${ticket.status === "resolved" ? t("mrkRes") : ticket.status === "in_progress" ? t("inPrg") : t("awtCli")}</span>
+                  <span class="faux-select-arrow"></span>
+                </button>
+                <div class="faux-select-menu">
+                  <button type="button" class="faux-select-option" data-action="select-option" data-value="replied">${t("awtCli")}</button>
+                  <button type="button" class="faux-select-option" data-action="select-option" data-value="in_progress">${t("inPrg")}</button>
+                  <button type="button" class="faux-select-option" data-action="select-option" data-value="resolved">${t("mrkRes")}</button>
+                </div>
+              </div>
             </label>
             <button class="button button--primary button--full" style="margin-top: 16px;" type="submit">${t("depMsg")}</button>
           </form>
@@ -1031,11 +1047,18 @@ function renderAdminTicket(ticket) {
             <h4 class="surface-form__title">${t("adjUrg")}</h4>
             <label class="field">
               <span class="field__label">${t("priLvl")}</span>
-              <select name="priority">
-                <option value="1" ${ticket.priority === 1 ? "selected" : ""}>${t("p1")}</option>
-                <option value="2" ${ticket.priority === 2 ? "selected" : ""}>${t("p2")}</option>
-                <option value="3" ${ticket.priority === 3 ? "selected" : ""}>${t("p3")}</option>
-              </select>
+              <div class="faux-select-wrapper">
+                <input type="hidden" name="priority" value="${ticket.priority}" required />
+                <button type="button" class="faux-select-btn" data-action="toggle-dropdown">
+                  <span class="faux-select-value">${ticket.priority === 1 ? t("p1") : ticket.priority === 2 ? t("p2") : t("p3")}</span>
+                  <span class="faux-select-arrow"></span>
+                </button>
+                <div class="faux-select-menu">
+                  <button type="button" class="faux-select-option" data-action="select-option" data-value="1">${t("p1")}</button>
+                  <button type="button" class="faux-select-option" data-action="select-option" data-value="2">${t("p2")}</button>
+                  <button type="button" class="faux-select-option" data-action="select-option" data-value="3">${t("p3")}</button>
+                </div>
+              </div>
             </label>
             <label class="field">
               <span class="field__label">${t("jus")}</span>
@@ -1048,12 +1071,19 @@ function renderAdminTicket(ticket) {
             <h4 class="surface-form__title">${t("qStt")}</h4>
             <label class="field">
               <span class="field__label">${t("stOvr")}</span>
-              <select name="status">
-                <option value="pending" ${ticket.status === "pending" ? "selected" : ""}>${t("penRev")}</option>
-                <option value="in_progress" ${ticket.status === "in_progress" ? "selected" : ""}>${t("inPrg")}</option>
-                <option value="replied" ${ticket.status === "replied" ? "selected" : ""}>${t("awtCli")}</option>
-                <option value="resolved" ${ticket.status === "resolved" ? "selected" : ""}>${t("resClo")}</option>
-              </select>
+              <div class="faux-select-wrapper">
+                <input type="hidden" name="status" value="${ticket.status}" required />
+                <button type="button" class="faux-select-btn" data-action="toggle-dropdown">
+                  <span class="faux-select-value">${ticket.status === "pending" ? t("penRev") : ticket.status === "in_progress" ? t("inPrg") : ticket.status === "replied" ? t("awtCli") : t("resClo")}</span>
+                  <span class="faux-select-arrow"></span>
+                </button>
+                <div class="faux-select-menu">
+                  <button type="button" class="faux-select-option" data-action="select-option" data-value="pending">${t("penRev")}</button>
+                  <button type="button" class="faux-select-option" data-action="select-option" data-value="in_progress">${t("inPrg")}</button>
+                  <button type="button" class="faux-select-option" data-action="select-option" data-value="replied">${t("awtCli")}</button>
+                  <button type="button" class="faux-select-option" data-action="select-option" data-value="resolved">${t("resClo")}</button>
+                </div>
+              </div>
             </label>
             <button class="button button--ghost button--full" style="margin-top: 16px;" type="submit">${t("frcUpd")}</button>
           </form>
@@ -1094,25 +1124,56 @@ function renderAdminView() {
           <div class="eyebrow">${t("fltSet")}</div>
           <h2 class="filter-bar__title">${t("tktOv")}</h2>
         </div>
-        <div class="filter-bar__controls filter-bar__controls--grid">
-          <select id="admin-filter-priority">
-            <option value="all">${t("allPri")}</option>
-            <option value="1" ${state.adminFilters.priority === "1" ? "selected" : ""}>${t("p1")}</option>
-            <option value="2" ${state.adminFilters.priority === "2" ? "selected" : ""}>${t("p2")}</option>
-            <option value="3" ${state.adminFilters.priority === "3" ? "selected" : ""}>${t("p3")}</option>
-          </select>
-          <select id="admin-filter-status">
-            <option value="all">${t("allStat")}</option>
-            <option value="pending" ${state.adminFilters.status === "pending" ? "selected" : ""}>${t("stPend")}</option>
-            <option value="in_progress" ${state.adminFilters.status === "in_progress" ? "selected" : ""}>${t("stProg")}</option>
-            <option value="replied" ${state.adminFilters.status === "replied" ? "selected" : ""}>${t("stRep")}</option>
-            <option value="resolved" ${state.adminFilters.status === "resolved" ? "selected" : ""}>${t("stRes")}</option>
-          </select>
-          <select id="admin-filter-department">
-            <option value="all">${t("allDep")}</option>
-            ${departments.map((item) => `<option value="${escapeHtml(item)}" ${state.adminFilters.department === item ? "selected" : ""}>${escapeHtml(item)}</option>`).join("")}
-          </select>
-          <input id="admin-filter-search" type="search" value="${escapeHtml(state.adminFilters.search)}" placeholder="${t("srchTk")}" />
+        <div class="filter-bar__controls filter-bar__controls--grid" style="display: flex; gap: 16px; flex-wrap: wrap;">
+          <div class="faux-select-wrapper" style="min-width: 180px; flex: 1;">
+             <button type="button" class="faux-select-btn" data-action="toggle-dropdown" style="min-height: 48px; padding: 12px 20px;">
+               <span class="faux-select-value">${state.adminFilters.priority === "1" ? t("p1") :
+      state.adminFilters.priority === "2" ? t("p2") :
+        state.adminFilters.priority === "3" ? t("p3") :
+          t("allPri")
+    }</span>
+               <i class="faux-select-arrow"></i>
+             </button>
+             <div class="faux-select-menu">
+               <button type="button" class="faux-select-option" data-action="select-option" data-value="all">${t("allPri")}</button>
+               <button type="button" class="faux-select-option" data-action="select-option" data-value="1">${t("p1")}</button>
+               <button type="button" class="faux-select-option" data-action="select-option" data-value="2">${t("p2")}</button>
+               <button type="button" class="faux-select-option" data-action="select-option" data-value="3">${t("p3")}</button>
+             </div>
+             <input type="hidden" id="admin-filter-priority" value="${state.adminFilters.priority}" />
+          </div>
+          <div class="faux-select-wrapper" style="min-width: 180px; flex: 1;">
+             <button type="button" class="faux-select-btn" data-action="toggle-dropdown" style="min-height: 48px; padding: 12px 20px;">
+               <span class="faux-select-value">${state.adminFilters.status === "pending" ? t("stPend") :
+      state.adminFilters.status === "in_progress" ? t("stProg") :
+        state.adminFilters.status === "replied" ? t("stRep") :
+          state.adminFilters.status === "resolved" ? t("stRes") :
+            t("allStat")
+    }</span>
+               <i class="faux-select-arrow"></i>
+             </button>
+             <div class="faux-select-menu">
+               <button type="button" class="faux-select-option" data-action="select-option" data-value="all">${t("allStat")}</button>
+               <button type="button" class="faux-select-option" data-action="select-option" data-value="pending">${t("stPend")}</button>
+               <button type="button" class="faux-select-option" data-action="select-option" data-value="in_progress">${t("stProg")}</button>
+               <button type="button" class="faux-select-option" data-action="select-option" data-value="replied">${t("stRep")}</button>
+               <button type="button" class="faux-select-option" data-action="select-option" data-value="resolved">${t("stRes")}</button>
+             </div>
+             <input type="hidden" id="admin-filter-status" value="${state.adminFilters.status}" />
+          </div>
+          <div class="faux-select-wrapper" style="min-width: 180px; flex: 1;">
+             <button type="button" class="faux-select-btn" data-action="toggle-dropdown" style="min-height: 48px; padding: 12px 20px;">
+               <span class="faux-select-value">${state.adminFilters.department === "all" ? t("allDep") : state.adminFilters.department
+    }</span>
+               <i class="faux-select-arrow"></i>
+             </button>
+             <div class="faux-select-menu">
+               <button type="button" class="faux-select-option" data-action="select-option" data-value="all">${t("allDep")}</button>
+               ${departments.map((item) => `<button type="button" class="faux-select-option" data-action="select-option" data-value="${escapeHtml(item)}">${escapeHtml(item)}</button>`).join("")}
+             </div>
+             <input type="hidden" id="admin-filter-department" value="${state.adminFilters.department}" />
+          </div>
+          <input id="admin-filter-search" type="search" value="${escapeHtml(state.adminFilters.search)}" placeholder="${t("srchTk")}" style="height: 48px; padding: 12px 20px; border-radius: var(--radius-lg); background: rgba(255, 255, 255, 0.5); border: 1px solid var(--line-light); flex: 2;" />
         </div>
       </section>
 
@@ -1274,7 +1335,7 @@ async function handleSubmit(event) {
       const ticketId = form.dataset.ticketId;
       const body = Object.fromEntries(new FormData(form).entries());
       body.attachments = await collectUserAttachments(form);
-      await api(`/ api / user / tickets / ${ticketId}/supplement`, { method: "POST", body });
+      await api(`/api/user/tickets/${ticketId}/supplement`, { method: "POST", body });
       setFlash("info", `Update added to ${ticketId}.`);
       await loadBootstrap();
       return;
@@ -1359,7 +1420,11 @@ async function handleClick(event) {
       const input = wrapper.querySelector("input[type='hidden']");
       const display = wrapper.querySelector(".faux-select-value");
 
-      display.textContent = label;
+      if (input) {
+        input.value = value;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      if (display) display.textContent = label;
       wrapper.classList.remove("is-open");
       return;
     }
