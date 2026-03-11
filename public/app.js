@@ -16,7 +16,7 @@ const state = {
 
 const TRANSLATIONS = {
   en: {
-    publicFeedback: "Public Feedback",
+    publicFeedback: "Swift solutions, Real results",
     adminConsole: "Admin Console",
     clientWorkspace: "Client Workspace",
     submitRequest: "Submit Request",
@@ -29,7 +29,7 @@ const TRANSLATIONS = {
     heroSup: "Support",
     heroDel: "Delivered.",
     heroSub: "Submit your request below. We handle priority operations with focus, ensuring your workflows remain uninterrupted.",
-    newReq: "New Request",
+    newReq: "NEW REQUEST",
     trackStat: "Track Status",
     intakeForm: "Intake Form",
     tellNeed: "Tell us what you need",
@@ -157,19 +157,19 @@ const TRANSLATIONS = {
     heroSup: "Sokongan",
     heroDel: "Luar Biasa.",
     heroSub: "Hantarkan permintaan anda di bawah. Kami menguruskan operasi keutamaan dengan fokus, memastikan aliran kerja anda tidak terganggu.",
-    newReq: "Permintaan Baru",
+    newReq: "PERMINTAAN BARU",
     trackStat: "Jejak Status",
     intakeForm: "Borang Permintaan",
     tellNeed: "Beritahu kami keperluan anda",
     fullName: "Nama Penuh",
     emailAdd: "Alamat E-mel",
     phoneNum: "Nombor Telefon",
-    dept: "Jabatan",
+    dept: "Agensi/syarikat",
     category: "Kategori",
     subject: "Subjek",
     desc: "Penerangan Terperinci",
     atchImg: "Lampirkan Imej (Pilihan)",
-    atchVid: "Rakam Skrin (Maks 60s)",
+    atchVid: "Rakam Skrin (Max 60s)",
     extTkts: "Tiket Sedia Ada",
     extSub: "Jejak permintaan semasa anda, atau log masuk sebagai pentadbir.",
     clientVal: "Pengesahan Klien",
@@ -450,9 +450,15 @@ function formatBytes(value) {
   return `${value} B`;
 }
 
+let flashTimeout = null;
 function setFlash(type, message) {
-  state.flash = { type, message };
+  state.flash = { type, message, id: Date.now() };
   render();
+  if (flashTimeout) clearTimeout(flashTimeout);
+  flashTimeout = setTimeout(() => {
+    state.flash = null;
+    render();
+  }, 3000);
 }
 
 function renderFlash() {
@@ -522,7 +528,7 @@ function renderTopbar(mode) {
     mode === "public"
       ? `
           <a class="topbar__link topbar__link--btn" href="#submit-ticket">${t("newReq")}</a>
-          <button class="topbar__link topbar__link--btn" data-action="open-contact-modal">${t("contactUs")}</button>
+          <button class="topbar__link topbar__link--btn" data-action="open-contact-modal">${t("CONTACT US")}</button>
         `
       : `
           <span class="topbar__meta">${escapeHtml(modeLabel)}</span>
@@ -556,9 +562,33 @@ function renderTopbar(mode) {
 }
 
 window.setLanguage = function (lang) {
-  state.lang = lang;
-  localStorage.setItem("ticketing_lang", lang);
-  render();
+  if (state.lang === lang) return;
+  
+  const appContainer = document.getElementById('app');
+  if (!appContainer) {
+    state.lang = lang;
+    localStorage.setItem("ticketing_lang", lang);
+    render();
+    return;
+  }
+
+  // 1. Trigger Exit Blur-Fade Animation
+  appContainer.classList.add('lang-transition-exit');
+  
+  setTimeout(() => {
+    // 2. Change language and render DOM while hidden/blurred
+    state.lang = lang;
+    localStorage.setItem("ticketing_lang", lang);
+    render();
+    
+    // 3. Immediately prepare entrance state
+    appContainer.classList.remove('lang-transition-exit');
+    appContainer.classList.add('lang-transition-enter');
+    
+    // 4. Force reflow, then remove enter class to animate normally
+    void appContainer.offsetWidth; 
+    appContainer.classList.remove('lang-transition-enter');
+  }, 400); // 0.4s matches the slower, gentle drop-out animation defined in CSS
 };
 
 function renderFooter() {
@@ -688,8 +718,8 @@ function renderPublicPage() {
             </label>
           </div>
           <label class="field">
-            <span class="field__label">${t("desc")}</span>
-            <textarea name="description" placeholder="Describe the impact..." required></textarea>
+            <span class="field__label">${t("desc")} <span class="size-hint" style="opacity: 0.6; font-size: 0.8em; margin-left: 4px;">(Max 150 characters)</span></span>
+            <textarea name="description" placeholder="Describe the impact..." maxlength="150" required></textarea>
           </label>
           <div class="form-row">
             <div class="field">
@@ -1215,7 +1245,7 @@ async function handleSubmit(event) {
       const result = await api("/api/public/tickets", { method: "POST", body });
       state.token = result.token;
       localStorage.setItem("ticketing_token", result.token);
-      state.flash = { type: "info", message: `Ticket created: ${result.ticketId} ` };
+      setFlash("info", `Ticket created: ${result.ticketId}`);
       await loadBootstrap();
       return;
     }
@@ -1225,7 +1255,7 @@ async function handleSubmit(event) {
       const result = await api("/api/public/tickets/lookup", { method: "POST", body });
       state.token = result.token;
       localStorage.setItem("ticketing_token", result.token);
-      state.flash = { type: "info", message: `Ticket opened: ${result.ticketId} ` };
+      setFlash("info", `Ticket opened: ${result.ticketId}`);
       await loadBootstrap();
       return;
     }
@@ -1235,7 +1265,7 @@ async function handleSubmit(event) {
       const result = await api("/api/auth/admin-login", { method: "POST", body });
       state.token = result.token;
       localStorage.setItem("ticketing_token", result.token);
-      state.flash = { type: "info", message: "Admin console opened." };
+      setFlash("info", "Admin console opened.");
       await loadBootstrap();
       return;
     }
@@ -1245,7 +1275,7 @@ async function handleSubmit(event) {
       const body = Object.fromEntries(new FormData(form).entries());
       body.attachments = await collectUserAttachments(form);
       await api(`/ api / user / tickets / ${ticketId}/supplement`, { method: "POST", body });
-      state.flash = { type: "info", message: `Update added to ${ticketId}.` };
+      setFlash("info", `Update added to ${ticketId}.`);
       await loadBootstrap();
       return;
     }
@@ -1255,7 +1285,7 @@ async function handleSubmit(event) {
       const body = Object.fromEntries(new FormData(form).entries());
       body.attachments = await collectAdminAttachments(form);
       await api(`/api/admin/tickets/${ticketId}/reply`, { method: "POST", body });
-      state.flash = { type: "info", message: `Reply sent for ${ticketId}.` };
+      setFlash("info", `Reply sent for ${ticketId}.`);
       await loadBootstrap();
       return;
     }
@@ -1264,7 +1294,7 @@ async function handleSubmit(event) {
       const ticketId = form.dataset.ticketId;
       const body = Object.fromEntries(new FormData(form).entries());
       await api(`/api/admin/tickets/${ticketId}/priority`, { method: "POST", body });
-      state.flash = { type: "info", message: `Priority updated for ${ticketId}.` };
+      setFlash("info", `Priority updated for ${ticketId}.`);
       await loadBootstrap();
       return;
     }
@@ -1273,7 +1303,7 @@ async function handleSubmit(event) {
       const ticketId = form.dataset.ticketId;
       const body = Object.fromEntries(new FormData(form).entries());
       await api(`/api/admin/tickets/${ticketId}/status`, { method: "POST", body });
-      state.flash = { type: "info", message: `Status updated for ${ticketId}.` };
+      setFlash("info", `Status updated for ${ticketId}.`);
       await loadBootstrap();
     }
   } catch (error) {
@@ -1298,7 +1328,7 @@ async function handleClick(event) {
       state.token = "";
       state.bootstrap = null;
       localStorage.removeItem("ticketing_token");
-      state.flash = { type: "info", message: "Returned to the public homepage." };
+      setFlash("info", "Returned to the public homepage.");
       render();
       return;
     }
@@ -1306,7 +1336,7 @@ async function handleClick(event) {
     if (trigger.dataset.action === "resolve-ticket") {
       const ticketId = trigger.dataset.ticketId;
       await api(`/api/user/tickets/${ticketId}/resolve`, { method: "POST" });
-      state.flash = { type: "info", message: `${ticketId} archived successfully.` };
+      setFlash("info", `${ticketId} archived successfully.`);
       await loadBootstrap();
       return;
     }

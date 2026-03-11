@@ -27,8 +27,8 @@
   --shadow-btn: 0 8px 24px -6px rgba(16, 89, 66, 0.15);
 
   /* Typography */
-  --serif: "Instrument Serif", Georgia, serif;
-  --sans: "Geist", "Inter", sans-serif;
+  --serif: "Syne", sans-serif;
+  --sans: "Outfit", "Inter", sans-serif;
 
   /* Geometry */
   --radius-xl: 40px;
@@ -1154,4 +1154,61 @@ button {
 .modal-close:hover {
   color: var(--text-strong);
   background: rgba(0, 0, 0, 0.04);
+}
+
+/* ==========================================================================
+   Kinetic Language Transition
+   Premium Frosted Glass Blur & Gentle Slide (Refined 2026 Trend)
+   ========================================================================== */
+#app {
+  /* The normal state transition (when it gently glides back into place) - slowed down */
+  transition: filter 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+              opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+              transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: filter, opacity, transform;
+}
+
+#app.lang-transition-exit {
+  /* The Exit: Soft blur, gentle scale down, fades out */
+  filter: blur(10px) saturate(85%);
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+  /* Slower, softer exit curve */
+  transition: filter 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#app.lang-transition-enter {
+  /* The Entrance: Starts slightly higher, blurred, and slightly scaled up, then glides in gently */
+  filter: blur(10px) saturate(110%);
+  opacity: 0;
+  transform: translateY(-8px) scale(1.02);
+  transition: none;
+}
+
+/* ==========================================================================
+   Flash Message (Banner) Pop-In Animation
+   ========================================================================== */
+@keyframes flash-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(-10px);
+    filter: blur(8px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.02) translateY(0);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+}
+
+.banner {
+  animation: flash-pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  will-change: transform, opacity, filter;
 }
