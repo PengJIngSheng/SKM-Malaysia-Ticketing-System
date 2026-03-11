@@ -23,6 +23,7 @@ const { ensureDataFile, mutateData, nowIso, readData } = require("./store");
 
 const PUBLIC_DIR = path.join(process.cwd(), "public");
 const PORT = Number(process.env.PORT || 3000);
+const ADMIN_PORT = Number(process.env.ADMIN_PORT || 4000);
 const JSON_LIMIT_BYTES = 40 * 1024 * 1024;
 
 function sendJson(res, statusCode, payload) {
@@ -590,8 +591,8 @@ function canAccessTicket(user, ticket) {
   return user.role === "admin" || ticket.userId === user.id;
 }
 
-async function handleRequest(req, res) {
-  const urlObject = new URL(req.url, `http://${req.headers.host || `localhost:${PORT}`}`);
+async function handleRequest(req, res, isAdminPort = false) {
+  const urlObject = new URL(req.url, `http://${req.headers.host || `localhost:${isAdminPort ? ADMIN_PORT : PORT}`}`);
   const { pathname } = urlObject;
 
   try {
@@ -1289,8 +1290,10 @@ async function handleRequest(req, res) {
     }
 
     if (req.method === "GET") {
-      const staticPath =
-        pathname === "/" ? path.join(PUBLIC_DIR, "index.html") : path.join(PUBLIC_DIR, pathname);
+      let staticPath = pathname === "/" ? path.join(PUBLIC_DIR, "index.html") : path.join(PUBLIC_DIR, pathname);
+      if (pathname === "/" && isAdminPort) {
+        staticPath = path.join(PUBLIC_DIR, "admin.html");
+      }
       const file = readStaticFile(staticPath);
       if (file) {
         sendText(res, 200, file, mimeTypeFor(staticPath));
@@ -1312,7 +1315,13 @@ async function handleRequest(req, res) {
 }
 
 const server = http.createServer((req, res) => {
-  handleRequest(req, res).catch((error) => {
+  handleRequest(req, res, false).catch((error) => {
+    respondError(res, error);
+  });
+});
+
+const adminServer = http.createServer((req, res) => {
+  handleRequest(req, res, true).catch((error) => {
     respondError(res, error);
   });
 });
@@ -1322,6 +1331,9 @@ if (require.main === module) {
     .then(() => {
       server.listen(PORT, () => {
         console.log(`Ticketing MVP running at http://localhost:${PORT}`);
+      });
+      adminServer.listen(ADMIN_PORT, () => {
+        console.log(`Admin portal running at http://localhost:${ADMIN_PORT}`);
         console.log("Admin demo login: admin@gov-support.local / Admin123!");
       });
     })
