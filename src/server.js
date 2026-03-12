@@ -10,6 +10,7 @@ const {
   normalizeKeywordList,
   validateAttachment,
 } = require("./rules");
+const { dispatchNotification } = require("./notify");
 const {
   createId,
   createOtpCode,
@@ -361,8 +362,7 @@ function mapTicketForUser(ticket, data, token) {
       attachments: [],
       responseDeadline: null,
       resolutionDeadline: null,
-      restrictedMessage:
-        "Priority 1 incidents are handled directly by WhatsApp or phone. Progress tracking is hidden for this ticket.",
+      restrictedMessage: "__p1Note__",
     };
   }
 
@@ -793,7 +793,6 @@ async function handleRequest(req, res, isAdminPort = false) {
         const user = findOrCreatePublicUser(data, body);
         const priorityDecision = classifyPriority({
           settings: data.settings,
-          subject: body.subject,
           description: body.description,
           issueType: body.issueType,
           attachments,
@@ -848,6 +847,10 @@ async function handleRequest(req, res, isAdminPort = false) {
         const token = createUserSession(data, user);
 
         queueNotificationsForTicket(data, ticket);
+
+        // Fire real email/WhatsApp notifications (async, non-blocking)
+        dispatchNotification(ticket, user);
+
         logAudit(data, {
           actorId: user.id,
           actorRole: "public",

@@ -71,11 +71,29 @@ function validateAttachment({ role, attachment }) {
 }
 
 function classifyPriority({ settings, description, issueType, attachments }) {
+  // --- Hard business rules (override all scoring) ---
+  if (issueType === "security" || issueType === "data_loss") {
+    return {
+      priority: 1,
+      reasons: [`Issue type "${issueType}" is always classified as P1 (Critical).`],
+    };
+  }
+
+  if (issueType === "consultation") {
+    return {
+      priority: 3,
+      reasons: ["General Consultation is always classified as P3 (Low)."],
+    };
+  }
+
+  // --- Score-based classification for everything else (default floor: P2) ---
   const combinedText = `${description || ""}`.toLowerCase();
   const highKeywords = normalizeKeywordList(settings.priorityRules.highKeywords);
   const mediumKeywords = normalizeKeywordList(settings.priorityRules.mediumKeywords);
   const reasons = [];
-  let score = ISSUE_TYPE_PRIORITY[issueType] || 0;
+
+  // Start at 2 so that all remaining types default to P2 unless keywords push them up
+  let score = 2;
 
   const highMatches = highKeywords.filter((keyword) => combinedText.includes(keyword.toLowerCase()));
   const mediumMatches = mediumKeywords.filter((keyword) =>
@@ -93,7 +111,7 @@ function classifyPriority({ settings, description, issueType, attachments }) {
   }
 
   if (attachments.some((attachment) => attachment.kind === "recording")) {
-    score += 2;
+    score += 1;
     reasons.push("Screen recording attached.");
   }
 
@@ -102,18 +120,10 @@ function classifyPriority({ settings, description, issueType, attachments }) {
     reasons.push("Error screenshot attached.");
   }
 
-  if (attachments.length >= 2) {
-    score += 1;
-  }
-
-  if (["outage", "security", "data_loss"].includes(issueType)) {
-    reasons.push(`Issue type ${issueType} is treated as business-critical.`);
-  }
-
   const priority = score >= 5 ? 1 : score >= 2 ? 2 : 3;
   return {
     priority,
-    reasons: reasons.length > 0 ? reasons : ["Default rule set classified the ticket."],
+    reasons: reasons.length > 0 ? reasons : [`Issue type "${issueType}" classified as default P2.`],
   };
 }
 

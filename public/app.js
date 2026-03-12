@@ -1,7 +1,7 @@
 const app = document.getElementById("app");
 
 const state = {
-  token: localStorage.getItem("ticketing_token") || "",
+  token: "",
   lang: localStorage.getItem("ticketing_lang") || "en",
   bootstrap: null,
   flash: null,
@@ -141,7 +141,11 @@ const TRANSLATIONS = {
     allStat: "All statuses",
     allDep: "All departments",
     srchTk: "Search by ticket, subject, or user",
-    noMtc: "No tickets match the current filter set."
+    noMtc: "No tickets match the current filter set.",
+    noRecord: "No records yet.",
+    noTicketsEmpty: "You're all caught up.",
+    noTicketsEmptySub: "No tickets match this filter.",
+    p1Note: "Your ticket has been escalated as Critical (P1). Our team has been alerted via email and WhatsApp and will contact you directly."
   },
   ms: {
     publicFeedback: "Maklum Balas Awam",
@@ -261,7 +265,11 @@ const TRANSLATIONS = {
     allStat: "Semua status",
     allDep: "Semua jabatan",
     srchTk: "Cari fail tiket, subjek, pengguna",
-    noMtc: "Tiada tiket sepadan dengan penapis."
+    noMtc: "Tiada tiket sepadan dengan penapis.",
+    noRecord: "Tiada rekod lagi.",
+    noTicketsEmpty: "Semua selesai.",
+    noTicketsEmptySub: "Tiada tiket sepadan dengan penapis ini.",
+    p1Note: "Tiket anda telah dipertingkatkan sebagai Kritikal (P1). Pasukan kami telah dimaklumkan melalui e-mel dan WhatsApp dan akan menghubungi anda secara terus."
   },
   zh: {
     publicFeedback: "公众反馈",
@@ -381,7 +389,11 @@ const TRANSLATIONS = {
     allStat: "所有状态",
     allDep: "所有部门",
     srchTk: "通过工单ID、主旨或用户进行搜索",
-    noMtc: "当前筛选集未匹配到工单。"
+    noMtc: "当前筛选集未匹配到工单。",
+    noRecord: "暂无记录",
+    noTicketsEmpty: "一切就绪。",
+    noTicketsEmptySub: "当前筛选条件下无工单。",
+    p1Note: "您的工单已被升级为紧急（P1）。我们的团队已通过邮件和 WhatsApp 收到通知，将直接与您联系。"
   }
 };
 
@@ -428,10 +440,27 @@ function formatDate(value) {
   if (!value) {
     return "-";
   }
-  return new Intl.DateTimeFormat("zh-Hans", {
+  const localeMap = { en: "en-MY", ms: "ms-MY", zh: "zh-Hans" };
+  const locale = localeMap[state.lang] || "en-MY";
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function formatRelativeDate(value) {
+  if (!value) return "-";
+  const diff = Date.now() - new Date(value).getTime();
+  const hours = diff / (1000 * 60 * 60);
+  if (hours < 1) {
+    const mins = Math.floor(diff / (1000 * 60));
+    return mins <= 1 ? (state.lang === "zh" ? "刚刚" : state.lang === "ms" ? "baru sahaja" : "just now") : `${mins} ${state.lang === "zh" ? "分钟前" : state.lang === "ms" ? "min lalu" : "min ago"}`;
+  }
+  if (hours < 48) {
+    const h = Math.floor(hours);
+    return `${h} ${state.lang === "zh" ? "小时前" : state.lang === "ms" ? "jam lalu" : "hr" + (h === 1 ? "" : "s") + " ago"}`;
+  }
+  return formatDate(value);
 }
 
 function formatBytes(value) {
@@ -458,11 +487,12 @@ function setFlash(type, message) {
     if (state.flash && state.flash.id === flashId) {
       const banner = document.querySelector('.banner');
       if (banner) {
-        // Apply premium 'breathing' fade out effect
-        banner.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+        // Fade out: slide up + blur
+        banner.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
         banner.style.opacity = '0';
-        banner.style.filter = 'blur(12px) brightness(1.2)';
-        banner.style.transform = 'translateX(-50%) translateY(-10px) scale(0.98)';
+        banner.style.transform = 'translateY(-8px) scale(0.98)';
+        banner.style.maxHeight = banner.offsetHeight + 'px';
+        setTimeout(() => { banner.style.maxHeight = '0'; banner.style.marginBottom = '0'; banner.style.padding = '0'; }, 100);
 
         // Remove from DOM strictly after animation without global render
         setTimeout(() => {
@@ -477,7 +507,7 @@ function setFlash(type, message) {
         render();
       }
     }
-  }, 1800);
+  }, 2000);
 }
 
 function renderFlash() {
@@ -651,7 +681,7 @@ function attachmentList(items) {
 
 function conversation(entries, emptyLabel) {
   if (!entries || entries.length === 0) {
-    return `<div class="soft-empty">${escapeHtml(emptyLabel || "暂无记录")}</div>`;
+    return `<div class="soft-empty">${escapeHtml(emptyLabel || t("noRecord"))}</div>`;
   }
 
   return `
@@ -784,8 +814,8 @@ function renderPublicPage() {
         <img src="https://i.ibb.co/0yZ9dYbt/pepperlabs-logo.png" alt="Pepper Labs Logo" class="modal-logo" />
         <h2 class="modal-title">Contact Us</h2>
         <div class="modal-details">
-          <p><strong>Email:</strong> demo@gmail.com</p>
-          <p><strong>Phone:</strong> +60 1234567</p>
+          <p><strong>Email:\t</strong>digitalsocial2022@gmail.com</p>
+          <p><strong>Phone:\t</strong>016-350 4840</p>
         </div>
       </div>
     </div>
@@ -794,17 +824,17 @@ function renderPublicPage() {
 }
 
 function renderUserTicket(ticket) {
+  const priorityClass = `ticket-card--p${ticket.priority}`;
   return `
-    <article class="ticket-card">
+    <article class="ticket-card ${priorityClass}">
       <div class="ticket-card__header">
-        <div>
-          <h3 class="ticket-card__title">${escapeHtml(ticket.subject)}</h3>
-          <div class="badges-group" style="margin-bottom: 16px;">
+        <div style="flex: 1; min-width: 0;">
+          <div class="badges-group" style="margin-bottom: 12px;">
             ${priorityBadge(ticket.priority)}
             ${statusBadge(ticket.status)}
-            <span class="pill pill--neutral">${escapeHtml(ticket.id)}</span>
           </div>
-          <p class="workspace-card__copy" style="font-size: 1.1rem; color: var(--text-soft);">${escapeHtml(ticket.summary)}</p>
+          <h3 class="ticket-card__title">${escapeHtml(ticket.summary)}</h3>
+          <code class="ticket-id-code">${escapeHtml(ticket.id)}</code>
         </div>
         ${ticket.canEscalateToWhatsapp && ticket.whatsappEscalationLink
       ? `<a class="button button--secondary" href="${escapeHtml(ticket.whatsappEscalationLink)}" target="_blank" rel="noreferrer">${t("escTeam")}</a>`
@@ -813,16 +843,16 @@ function renderUserTicket(ticket) {
       </div>
 
       ${ticket.restricted
-      ? `<div class="banner banner--warning">${escapeHtml(ticket.restrictedMessage)}</div>`
+      ? `<div class="banner banner--p1-note">${t("p1Note")}</div>`
       : `
             <div class="ticket-card__meta">
               <div class="ticket-card__meta-item">
                 <span class="meta-label">${t("submOn")}</span>
-                <span class="meta-value">${escapeHtml(formatDate(ticket.createdAt))}</span>
+                <span class="meta-value" title="${escapeHtml(formatDate(ticket.createdAt))}">${escapeHtml(formatRelativeDate(ticket.createdAt))}</span>
               </div>
               <div class="ticket-card__meta-item">
                 <span class="meta-label">${t("lastUpd")}</span>
-                <span class="meta-value">${escapeHtml(formatDate(ticket.updatedAt))}</span>
+                <span class="meta-value" title="${escapeHtml(formatDate(ticket.updatedAt))}">${escapeHtml(formatRelativeDate(ticket.updatedAt))}</span>
               </div>
               <div class="ticket-card__meta-item">
                 <span class="meta-label">${t("dept")}</span>
@@ -855,14 +885,20 @@ function renderUserTicket(ticket) {
                       <textarea name="message" placeholder="${t("addDetPh")}" required></textarea>
                     </label>
                     <div class="form-row">
-                      <label class="field">
-                        <span class="field__label">${t("atchImg")}</span>
-                        <input name="image" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" />
-                      </label>
-                      <label class="field">
-                        <span class="field__label">${t("atchVd")}</span>
-                        <input name="recording" type="file" accept=".mp4,.webm,video/mp4,video/webm" />
-                      </label>
+                      <div class="field">
+                        <span class="field__label">${t("atchImg")} <span class="size-hint">(Max 5MB)</span></span>
+                        <label class="file-drop-area" id="sup-drop-image">
+                          <span class="file-msg">Choose Image or drag &amp; drop</span>
+                          <input name="image" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" />
+                        </label>
+                      </div>
+                      <div class="field">
+                        <span class="field__label">${t("atchVd")} <span class="size-hint">(Max 50MB)</span></span>
+                        <label class="file-drop-area" id="sup-drop-video">
+                          <span class="file-msg">Choose Video or drag &amp; drop</span>
+                          <input name="recording" type="file" accept=".mp4,.webm,video/mp4,video/webm" />
+                        </label>
+                      </div>
                     </div>
                     <div style="display: flex; gap: 16px; margin-top: 24px;">
                       <button class="button button--secondary" type="submit">${t("subCtx")}</button>
@@ -943,7 +979,17 @@ function renderUserView() {
       </section>
 
       <section class="workspace-list">
-        ${visibleTickets.length ? visibleTickets.map(renderUserTicket).join("") : `<div class="soft-empty">${t("noTkts")}</div>`}
+        ${visibleTickets.length ? visibleTickets.map(renderUserTicket).join("") : `
+        <div class="empty-state">
+          <div class="empty-state__icon">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="32" r="31" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="4 4"/>
+              <path d="M22 32h20M32 22v20" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="empty-state__title">${t("noTicketsEmpty")}</div>
+          <div class="empty-state__sub">${t("noTicketsEmptySub")}</div>
+        </div>`}
       </section>
 
       ${renderFooter()}
@@ -961,17 +1007,18 @@ function filteredAdminTickets() {
       state.adminFilters.status === "all" || ticket.status === state.adminFilters.status;
     const matchesDepartment =
       state.adminFilters.department === "all" || ticket.department === state.adminFilters.department;
-    const haystack = `${ticket.id} ${ticket.subject} ${ticket.department} ${ticket.user?.name || ""} `.toLowerCase();
+    const haystack = `${ticket.id} ${ticket.summary} ${ticket.department} ${ticket.user?.name || ""} `.toLowerCase();
     return matchesPriority && matchesStatus && matchesDepartment && (!search || haystack.includes(search));
   });
 }
 
 function renderAdminTicket(ticket) {
+  const priorityClass = `ticket-card--p${ticket.priority}`;
   return `
-    <article class="ticket-card ticket-card--admin">
+    <article class="ticket-card ticket-card--admin ${priorityClass}">
       <div class="ticket-card__header">
         <div>
-          <h3 class="ticket-card__title">${escapeHtml(ticket.subject)}</h3>
+          <h3 class="ticket-card__title">${escapeHtml(ticket.summary)}</h3>
           <div class="badges-group" style="margin-bottom: 16px;">
             ${priorityBadge(ticket.priority)}
             ${statusBadge(ticket.status)}
@@ -1000,7 +1047,7 @@ function renderAdminTicket(ticket) {
       <div class="ticket-card__meta" style="border-top: none; padding-top: 16px; margin-top: 0;">
         <div class="ticket-card__meta-item">
           <span class="meta-label">${t("creAt")}</span>
-          <span class="meta-value">${escapeHtml(formatDate(ticket.createdAt))}</span>
+          <span class="meta-value" title="${escapeHtml(formatDate(ticket.createdAt))}">${escapeHtml(formatRelativeDate(ticket.createdAt))}</span>
         </div>
         <div class="ticket-card__meta-item">
           <span class="meta-label">${t("respSla")}</span>
@@ -1192,7 +1239,17 @@ function renderAdminView() {
       </section>
 
       <section class="workspace-list">
-        ${tickets.length ? tickets.map(renderAdminTicket).join("") : `<div class="soft-empty">${t("noMtc")}</div>`}
+        ${tickets.length ? tickets.map(renderAdminTicket).join("") : `
+        <div class="empty-state">
+          <div class="empty-state__icon">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="32" r="31" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="4 4"/>
+              <path d="M20 32h24M32 20v24" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="empty-state__title">${t("noTicketsEmpty")}</div>
+          <div class="empty-state__sub">${t("noMtc")}</div>
+        </div>`}
       </section>
 
       ${renderFooter()}
@@ -1580,5 +1637,29 @@ document.addEventListener("change", (e) => {
   }
 });
 document.addEventListener("input", handleInput);
+
+// Scroll-reveal: fade+slide ticket cards in as they enter the viewport
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add("is-revealed");
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.08 });
+
+function attachRevealObserver() {
+  document.querySelectorAll(".ticket-card").forEach((el) => {
+    if (!el.classList.contains("is-revealed")) {
+      revealObserver.observe(el);
+    }
+  });
+}
+
+const _origRender = render;
+window.render = function () {
+  _origRender();
+  requestAnimationFrame(attachRevealObserver);
+};
 
 loadBootstrap();

@@ -317,32 +317,22 @@ button {
 
 /* Flash Messages */
 @keyframes flashDrop {
-  0% {
-    transform: translateY(-20px) scale(0.95);
-    opacity: 0;
-  }
-
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
+  0% { transform: translateY(-12px) scale(0.97); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .banner {
-  animation: flashDrop 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  margin: 0 auto 40px;
+  animation: flashDrop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  margin: 0 0 24px;
   padding: 16px 24px;
-  border-radius: 999px;
+  border-radius: var(--radius-lg);
   background: var(--bg-surface-solid);
   border: 1px solid var(--line-light);
   box-shadow: var(--shadow-card);
   text-align: center;
   font-size: 14px;
   font-weight: 500;
-  max-width: fit-content;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  line-height: 1.6;
 }
 
 .banner--info {
@@ -357,6 +347,13 @@ button {
   color: var(--rose-text);
   background: var(--rose-soft);
   border-color: transparent;
+}
+
+.banner--p1-note {
+  color: #9B1C1C;
+  background: rgba(253, 232, 232, 0.7);
+  border-color: rgba(155, 28, 28, 0.15);
+  backdrop-filter: blur(8px);
 }
 
 /* Buttons */
@@ -630,26 +627,38 @@ button {
   color: var(--emerald);
 }
 
-/* File Drop Area */
+/* File Drop Area — Glassmorphism Style */
 .file-drop-area {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   width: 100%;
-  padding: 24px;
-  border: 2px dashed var(--line-strong);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.4);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 100px;
+  padding: 28px 24px;
+  border: 2px dashed rgba(160, 130, 100, 0.35);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   overflow: hidden;
 }
 
 .file-drop-area:hover,
 .file-drop-area:focus-within {
-  border-color: var(--emerald);
-  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(160, 130, 100, 0.7);
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 0 0 3px rgba(160, 130, 100, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
   transform: translateY(-2px);
 }
 
@@ -664,20 +673,44 @@ button {
 }
 
 .file-msg {
-  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
   font-weight: 500;
-  color: var(--text-soft);
+  color: var(--text-muted);
   text-align: center;
   pointer-events: none;
+  line-height: 1.5;
+}
+
+.file-msg::before {
+  content: '';
+  display: block;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 4px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%23a09090' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E") center/contain no-repeat;
+  opacity: 0.6;
 }
 
 .file-drop-area.has-file {
-  border: 2px solid var(--emerald);
-  background: var(--emerald-soft);
+  border: 2px solid #5c8a6e;
+  background: rgba(222, 247, 236, 0.5);
+  box-shadow:
+    0 4px 24px rgba(5, 150, 105, 0.08),
+    0 0 0 3px rgba(5, 150, 105, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .file-drop-area.has-file .file-msg {
-  color: var(--emerald);
+  color: #03543F;
+}
+
+.file-drop-area.has-file .file-msg::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%2303543F' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  opacity: 0.8;
 }
 
 /* Glowing Error State */
@@ -700,12 +733,20 @@ button {
 
 .glow-error {
   animation: errorGlow 2s ease-in-out infinite;
-  background: var(--rose-soft);
+  background: rgba(253, 232, 232, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgba(180, 74, 74, 0.6) !important;
 }
 
 .glow-error .file-msg {
-  color: var(--rose-text);
+  color: #9B1C1C;
   font-weight: 600;
+}
+
+.glow-error .file-msg::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%239B1C1C' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='8' x2='12' y2='12'/%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'/%3E%3C/svg%3E");
+  opacity: 1;
 }
 
 .size-hint {
@@ -928,53 +969,87 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 14px;
+  padding: 5px 14px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 11.5px;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: 500;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
 }
 
 .pill--status.pill--pending {
-  background: #FDE8E8;
+  background: rgba(253, 232, 232, 0.85);
   color: #9B1C1C;
+  border-color: rgba(155, 28, 28, 0.2);
+  backdrop-filter: blur(8px);
+  position: relative;
+  padding-left: 24px;
 }
 
 .pill--status.pill--resolved {
-  background: #DEF7EC;
+  background: rgba(222, 247, 236, 0.85);
   color: #03543F;
+  border-color: rgba(3, 84, 63, 0.2);
+  backdrop-filter: blur(8px);
 }
 
 .pill--status.pill--in_progress {
-  background: #FEF08A;
+  background: rgba(254, 240, 138, 0.85);
   color: #713F12;
+  border-color: rgba(113, 63, 18, 0.2);
+  backdrop-filter: blur(8px);
 }
 
 .pill--status.pill--replied {
-  background: #E1EFFE;
+  background: rgba(225, 239, 254, 0.85);
   color: #1E429F;
+  border-color: rgba(30, 66, 159, 0.2);
+  backdrop-filter: blur(8px);
 }
 
 .pill--priority.pill--p1 {
   background: #9B1C1C;
   color: #fff;
+  border-color: rgba(155, 28, 28, 0.5);
+  box-shadow: 0 0 0 2px rgba(155, 28, 28, 0.12), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 .pill--priority.pill--p2 {
   background: var(--gold);
   color: #fff;
+  border-color: rgba(160, 130, 60, 0.4);
+  box-shadow: 0 0 0 2px rgba(184, 148, 68, 0.15), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
 .pill--priority.pill--p3 {
   background: var(--text-muted);
   color: #fff;
+  border-color: rgba(100, 100, 100, 0.3);
+  box-shadow: 0 0 0 2px rgba(100, 100, 100, 0.1), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 .badges-group {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Ticket ID monospace reference label */
+.ticket-id-code {
+  display: inline-block;
+  margin-top: 8px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.04);
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-light);
 }
 
 /* Timeline/Conversation */
@@ -1274,41 +1349,99 @@ button {
   transition: none;
 }
 
+/* Flash messages are now inline — see .banner above */
+
 /* ==========================================================================
-   Flash Message (Banner) Pop-In Animation
+   Priority Border Accents on Ticket Cards
    ========================================================================== */
-@keyframes flash-pop-in {
-  0% {
-    opacity: 0;
-    transform: translateX(-50%) scale(0.9) translateY(-10px);
-    filter: blur(8px);
-  }
-  60% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1.02) translateY(0);
-    filter: blur(0);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1) translateY(0);
-    filter: blur(0);
-  }
+.ticket-card--p1 {
+  border-left: 4px solid #9B1C1C;
 }
 
-.banner {
-  position: fixed;
-  top: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 99999;
-  min-width: 320px;
-  max-width: 500px;
-  padding: 18px 48px;
-  font-size: 1.05rem;
-  text-align: center;
-  border-radius: 100px;
-  box-shadow: 0 16px 48px -12px rgba(26, 28, 25, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
-  animation: flash-pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  will-change: transform, opacity, filter;
-  pointer-events: none;
+.ticket-card--p2 {
+  border-left: 4px solid var(--gold);
 }
+
+.ticket-card--p3 {
+  border-left: 4px solid var(--line-strong);
+}
+
+/* ==========================================================================
+   Pending Status Pulse Dot
+   ========================================================================== */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+  50%       { opacity: 0.4; transform: translateY(-50%) scale(1.5); }
+}
+
+.pill--status.pill--pending::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #9B1C1C;
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   Rich Empty State
+   ========================================================================== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 96px 24px;
+  text-align: center;
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  border: 1px dashed var(--line-strong);
+  box-shadow: var(--shadow-card);
+}
+
+.empty-state__icon {
+  opacity: 0.4;
+}
+
+.empty-state__title {
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  font-weight: 400;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+.empty-state__sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  max-width: 260px;
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   Scroll-Reveal: ticket cards start hidden, JS adds .is-revealed
+   ========================================================================== */
+.ticket-card {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ticket-card.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered delay for multiple cards visible at once */
+.ticket-card:nth-child(2) { transition-delay: 0.08s; }
+.ticket-card:nth-child(3) { transition-delay: 0.16s; }
+.ticket-card:nth-child(4) { transition-delay: 0.22s; }
+.ticket-card:nth-child(n+5) { transition-delay: 0.28s; }
