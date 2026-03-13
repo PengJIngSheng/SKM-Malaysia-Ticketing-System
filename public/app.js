@@ -477,52 +477,57 @@ function formatBytes(value) {
 }
 
 let flashTimeout = null;
-function setFlash(type, message) {
-  const flashId = Date.now();
-  state.flash = { type, message, id: flashId };
-  render();
 
-  setTimeout(() => {
-    // Only animate out if this specific flash is still active
-    if (state.flash && state.flash.id === flashId) {
-      const banner = document.querySelector('.banner');
-      if (banner) {
-        // Fade out: slide up + blur
-        banner.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
-        banner.style.opacity = '0';
-        banner.style.transform = 'translateY(-8px) scale(0.98)';
-        banner.style.maxHeight = banner.offsetHeight + 'px';
-        setTimeout(() => { banner.style.maxHeight = '0'; banner.style.marginBottom = '0'; banner.style.padding = '0'; }, 100);
-
-        // Remove from DOM strictly after animation without global render
-        setTimeout(() => {
-          if (state.flash && state.flash.id === flashId) {
-            state.flash = null;
-            if (banner.parentNode) banner.parentNode.removeChild(banner);
-          }
-        }, 800);
-      } else {
-        // Fallback
-        state.flash = null;
-        render();
-      }
+function dismissFlash(flashId) {
+  if (state.flash && state.flash.id === flashId) {
+    const banner = document.querySelector('.banner');
+    if (banner) {
+      banner.classList.add('banner--exiting');
+      setTimeout(() => {
+        if (state.flash && state.flash.id === flashId) {
+          state.flash = null;
+          const tc = document.getElementById('toast-container');
+          if (tc) tc.innerHTML = '';
+        }
+      }, 500);
+    } else {
+      state.flash = null;
     }
-  }, 2000);
+  }
+  if (flashTimeout) { clearTimeout(flashTimeout); flashTimeout = null; }
 }
 
-function renderFlash() {
-  if (!state.flash) {
-    return "";
-  }
+// Toast container lives outside #app so position:fixed works correctly
+// (#app has transform set which creates a new containing block)
+let toastContainer = document.getElementById('toast-container');
+if (!toastContainer) {
+  toastContainer = document.createElement('div');
+  toastContainer.id = 'toast-container';
+  document.body.appendChild(toastContainer);
+}
+
+function setFlash(type, message) {
+  if (flashTimeout) { clearTimeout(flashTimeout); flashTimeout = null; }
+  const flashId = Date.now();
+  state.flash = { type, message, id: flashId };
 
   const tone =
-    state.flash.type === "error"
+    type === "error"
       ? "banner--error"
-      : state.flash.type === "warning"
+      : type === "warning"
         ? "banner--warning"
         : "banner--info";
 
-  return `<div class="banner ${tone}">${escapeHtml(state.flash.message)}</div>`;
+  toastContainer.innerHTML = `<div class="banner ${tone}">${escapeHtml(message)}<button class="banner__close" data-action="dismiss-flash" data-flash-id="${flashId}">×</button></div>`;
+
+  flashTimeout = setTimeout(() => {
+    dismissFlash(flashId);
+  }, 4000);
+}
+
+function renderFlash() {
+  // Flash is now rendered to #toast-container outside #app
+  return "";
 }
 
 async function api(path, options = {}) {
@@ -717,7 +722,6 @@ function renderPublicPage() {
   app.innerHTML = `
     <div class="site-shell site-shell--public">
       ${renderTopbar("public")}
-      ${renderFlash()}
 
   <div class="public-dashboard-layout">
     <section class="form-stage" id="submit-ticket">
@@ -936,7 +940,6 @@ function renderUserView() {
   app.innerHTML = `
     <div class="site-shell site-shell--workspace">
       ${renderTopbar("user")}
-      ${renderFlash()}
 
       <section class="workspace-hero">
         <div class="workspace-hero__copy">
@@ -1162,7 +1165,6 @@ function renderAdminView() {
   app.innerHTML = `
     <div class="site-shell site-shell--workspace">
       ${renderTopbar("admin")}
-      ${renderFlash()}
 
       <section class="workspace-hero workspace-hero--admin">
         <div class="workspace-hero__copy">
@@ -1520,6 +1522,12 @@ async function handleClick(event) {
       }
       if (display) display.textContent = label;
       wrapper.classList.remove("is-open");
+      return;
+    }
+
+    if (trigger.dataset.action === "dismiss-flash") {
+      const flashId = Number(trigger.dataset.flashId);
+      if (flashId) dismissFlash(flashId);
       return;
     }
 
